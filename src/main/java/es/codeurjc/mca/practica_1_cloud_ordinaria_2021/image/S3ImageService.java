@@ -3,6 +3,7 @@ package es.codeurjc.mca.practica_1_cloud_ordinaria_2021.image;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -18,22 +19,25 @@ import java.util.UUID;
 @Profile("production")
 public class S3ImageService implements ImageService {
 
-    @Value("${amazon.s3.bucket-name}")
     private String BUCKET_NAME;
 
-    @Value("${amazon.s3.region}")
     private String REGION;
+
+    private String ENDPOINT;
 
     public static AmazonS3 s3;
 
-    public S3ImageService() {
+    public S3ImageService(@Value("${amazon.s3.region}") String REGION, @Value("${amazon.s3.bucket-name}") String BUCKET_NAME, @Value("${amazon.s3.endpoint}") String ENDPOINT) {
+        this.BUCKET_NAME = BUCKET_NAME;
+        this.REGION = REGION;
+        this.ENDPOINT = ENDPOINT;
         s3 = AmazonS3ClientBuilder
             .standard()
-            .withRegion(REGION)
+            .withRegion(this.REGION)
             .build();
 
-        if(!s3.doesBucketExistV2(BUCKET_NAME)) {
-            s3.createBucket(BUCKET_NAME);
+        if(!s3.doesBucketExistV2(this.BUCKET_NAME)) {
+            s3.createBucket(this.BUCKET_NAME);
         }
     }
 
@@ -56,7 +60,7 @@ public class S3ImageService implements ImageService {
     @Override
     public void deleteImage(String image) {
         try {
-            s3.deleteObject(BUCKET_NAME, image);
+            s3.deleteObject(BUCKET_NAME, image.replace(ENDPOINT, ""));
         } catch (Exception e){
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Can't delete s3 image");
         }
