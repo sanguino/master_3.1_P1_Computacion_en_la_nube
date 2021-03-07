@@ -3,7 +3,6 @@ package es.codeurjc.mca.practica_1_cloud_ordinaria_2021.image;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.UUID;
 
@@ -19,18 +19,19 @@ import java.util.UUID;
 @Profile("production")
 public class S3ImageService implements ImageService {
 
-    private String BUCKET_NAME;
-
+    @Value("${amazon.s3.region}")
     private String REGION;
 
+    @Value("${amazon.s3.bucket-name}")
+    private String BUCKET_NAME;
+
+    @Value("${amazon.s3.endpoint}")
     private String ENDPOINT;
 
     public static AmazonS3 s3;
 
-    public S3ImageService(@Value("${amazon.s3.region}") String REGION, @Value("${amazon.s3.bucket-name}") String BUCKET_NAME, @Value("${amazon.s3.endpoint}") String ENDPOINT) {
-        this.BUCKET_NAME = BUCKET_NAME;
-        this.REGION = REGION;
-        this.ENDPOINT = ENDPOINT;
+    @PostConstruct
+    public void initializeS3( ) {
         s3 = AmazonS3ClientBuilder
             .standard()
             .withRegion(this.REGION)
